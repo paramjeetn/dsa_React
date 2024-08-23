@@ -1,17 +1,16 @@
-// models/Level.js
 const mongoose = require('mongoose');
 
 const questionSchema = new mongoose.Schema({
-  text: String,
+  text: { type: String, required: true },
   details: {
-    questionText: String,
-    options: [String],
-    correctOption: String
+    questionText: { type: String, required: true },
+    options: [{ type: String, required: true }],
+    correctOption: { type: String, required: true }
   }
 });
 
 const levelSchema = new mongoose.Schema({
-  level: Number,
+  level: { type: Number, required: true },
   questions: [questionSchema]
 });
 

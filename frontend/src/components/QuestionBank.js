@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PlusCircle, MinusCircle, GripVertical } from 'lucide-react';
 
-const QuestionBank = () => {
+const QuestionBank = ({ onQuestionSelect }) => {
   const [tree, setTree] = useState([]);
 
   useEffect(() => {
@@ -12,7 +12,7 @@ const QuestionBank = () => {
   const fetchLevels = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/levels');
-      setTree(response.data);
+      setTree(response.data);  // Set the fetched levels in the component state
     } catch (error) {
       console.error('Error fetching levels:', error);
     }
@@ -21,7 +21,7 @@ const QuestionBank = () => {
   const addQuestion = async (levelIndex) => {
     const newQuestion = {
       text: `Question ${tree[levelIndex].questions.length + 1}`,
-      details: { questionText: "", options: ["", "", ""], correctOption: "" }
+      details: { questionText: '', options: ['', '', ''], correctOption: '' }
     };
 
     const updatedTree = [...tree];
@@ -32,9 +32,10 @@ const QuestionBank = () => {
 
   const removeQuestion = async (levelIndex, questionIndex) => {
     const updatedTree = [...tree];
+    const questionId = updatedTree[levelIndex].questions[questionIndex]._id;
     updatedTree[levelIndex].questions.splice(questionIndex, 1);
     setTree(updatedTree);
-    await saveLevel(updatedTree[levelIndex]);
+    await deleteQuestion(updatedTree[levelIndex]._id, questionId);
   };
 
   const addLevel = async () => {
@@ -51,6 +52,14 @@ const QuestionBank = () => {
       await axios.put(`http://localhost:5000/api/levels/${level._id}`, level);
     } catch (error) {
       console.error('Error saving level:', error);
+    }
+  };
+
+  const deleteQuestion = async (levelId, questionId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`);
+    } catch (error) {
+      console.error('Error deleting question:', error);
     }
   };
 
@@ -85,6 +94,7 @@ const QuestionBank = () => {
                 <div 
                   key={question._id} 
                   className="inline-block cursor-pointer hover:bg-gray-100 p-2 border border-gray-300 rounded"
+                  onClick={() => onQuestionSelect(question.details, level._id, question._id)}
                 >
                   <div className="p-2 flex items-center space-x-2">
                     <span>{question.text}</span>
