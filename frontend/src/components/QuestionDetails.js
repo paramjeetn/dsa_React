@@ -8,6 +8,7 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
     correctOption: questionDetails?.correctOption || ''
   });
 
+  const [currentQuestionId, setCurrentQuestionId] = useState(questionId || null);
   const [notification, setNotification] = useState('');
 
   useEffect(() => {
@@ -16,7 +17,8 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
       options: questionDetails?.options || ['', '', ''],
       correctOption: questionDetails?.correctOption || ''
     });
-  }, [questionDetails]);
+    setCurrentQuestionId(questionId || null);
+  }, [questionDetails, questionId]);
 
   const handleOptionChange = (index, value) => {
     const newOptions = [...details.options];
@@ -27,35 +29,60 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
   const handleCorrectOptionChange = (index) => {
     setDetails({ 
       ...details, 
-      correctOption: details.options[index] // Set the correct option to the one selected
+      correctOption: details.options[index]
     });
   };
 
+  const validateDetails = () => {
+    if (!details.questionText.trim()) {
+      return "Question text cannot be empty.";
+    }
+    if (details.options.some(option => !option.trim())) {
+      return "All options must be filled out.";
+    }
+    if (!details.correctOption.trim()) {
+      return "You must select a correct option.";
+    }
+    return null;
+  };
+
   const handleSave = async () => {
+    const validationError = validateDetails();
+    if (validationError) {
+      setNotification(validationError);
+      return;
+    }
+
     try {
-      if (questionId) {
+      let savedQuestion;
+
+      if (currentQuestionId && !currentQuestionId.startsWith('temp-')) {
         // Update existing question
-        await axios.put(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`, {
+        console.log('in update existing question');
+        console.log(levelId);
+        console.log(currentQuestionId);
+        await axios.put(`http://localhost:5000/api/levels/${levelId}/questions/${currentQuestionId}`, {
           text: details.questionText,
           details: details
         });
       } else {
         // Create new question
-        await axios.post(`http://localhost:5000/api/levels/${levelId}/questions`, {
+        console.log('in create new question');
+        console.log(levelId);
+        const response = await axios.post(`http://localhost:5000/api/levels/${levelId}/questions`, {
           text: details.questionText,
           details: details
         });
+        savedQuestion = response.data;
+        setCurrentQuestionId(savedQuestion._id);  // Update with the real ID from the backend
+        onSave(savedQuestion);
       }
       
-      onSave(details); // Call the onSave function passed as a prop to update the frontend state
-      
-      // Show success notification
       setNotification('Question saved successfully!');
-      setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
+      setTimeout(() => setNotification(''), 3000);
 
     } catch (error) {
       console.error('Error saving question details:', error);
-      // Show error notification
       setNotification('Failed to save question.');
       setTimeout(() => setNotification(''), 3000);
     }
@@ -100,7 +127,7 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
       </button>
 
       {notification && (
-        <div className="mt-4 p-2 bg-green-200 text-green-800 rounded">
+        <div className={`mt-4 p-2 rounded ${notification.includes('Failed') || notification.includes('cannot') ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
           {notification}
         </div>
       )}

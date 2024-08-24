@@ -12,30 +12,54 @@ const QuestionBank = ({ onQuestionSelect }) => {
   const fetchLevels = async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/levels');
-      setTree(response.data);  // Set the fetched levels in the component state
+      setTree(response.data);
     } catch (error) {
       console.error('Error fetching levels:', error);
     }
   };
 
-  const addQuestion = async (levelIndex) => {
+  const addQuestion = (levelIndex) => {
+    console.log(`Adding question to level index: ${levelIndex}`);
+
+    // Create a new question object locally
     const newQuestion = {
+      _id: `temp-${Date.now()}`, // Temporary ID until the backend generates a real one
       text: `Question ${tree[levelIndex].questions.length + 1}`,
       details: { questionText: '', options: ['', '', ''], correctOption: '' }
     };
 
+    // Update the frontend state immediately
     const updatedTree = [...tree];
     updatedTree[levelIndex].questions.push(newQuestion);
     setTree(updatedTree);
-    await saveLevel(updatedTree[levelIndex]);
+
+    // Now make the API call to save the new question
+    const levelId = tree[levelIndex]._id;
+    axios.post(`http://localhost:5000/api/levels/${levelId}/questions`, newQuestion)
+      .then(response => {
+        // Replace the temporary question with the one returned by the backend
+        updatedTree[levelIndex].questions[updatedTree[levelIndex].questions.length - 1] = response.data;
+        setTree([...updatedTree]);
+      })
+      .catch(error => {
+        console.error('Error adding question:', error.response ? error.response.data : error.message);
+        // Optionally remove the temp question if saving fails
+      });
   };
 
   const removeQuestion = async (levelIndex, questionIndex) => {
     const updatedTree = [...tree];
+    const levelId = updatedTree[levelIndex]._id;
     const questionId = updatedTree[levelIndex].questions[questionIndex]._id;
-    updatedTree[levelIndex].questions.splice(questionIndex, 1);
-    setTree(updatedTree);
-    await deleteQuestion(updatedTree[levelIndex]._id, questionId);
+
+    try {
+      await axios.delete(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`);
+      
+      updatedTree[levelIndex].questions.splice(questionIndex, 1);
+      setTree(updatedTree);
+    } catch (error) {
+      console.error('Error deleting question:', error.response ? error.response.data : error.message);
+    }
   };
 
   const addLevel = async () => {
@@ -43,23 +67,11 @@ const QuestionBank = ({ onQuestionSelect }) => {
       level: tree.length + 1,
       questions: []
     };
-    const response = await axios.post('http://localhost:5000/api/levels', newLevel);
-    setTree([...tree, response.data]);
-  };
-
-  const saveLevel = async (level) => {
     try {
-      await axios.put(`http://localhost:5000/api/levels/${level._id}`, level);
+      const response = await axios.post('http://localhost:5000/api/levels', newLevel);
+      setTree([...tree, response.data]);
     } catch (error) {
-      console.error('Error saving level:', error);
-    }
-  };
-
-  const deleteQuestion = async (levelId, questionId) => {
-    try {
-      await axios.delete(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`);
-    } catch (error) {
-      console.error('Error deleting question:', error);
+      console.error('Error adding level:', error.response ? error.response.data : error.message);
     }
   };
 

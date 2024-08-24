@@ -5,30 +5,35 @@ import './App.css';
 
 function App() {
   const [selectedQuestionDetails, setSelectedQuestionDetails] = useState(null);
+  const [selectedLevelId, setSelectedLevelId] = useState(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
 
-  const handleQuestionSelect = (questionDetails) => {
+  const handleQuestionSelect = (questionDetails, levelId, questionId) => {
     setSelectedQuestionDetails(questionDetails);
+    setSelectedLevelId(levelId);
+    setSelectedQuestionId(questionId);
   };
 
   const handleSaveQuestionDetails = (updatedDetails) => {
-    // Here you would update the question in your database
-    console.log('Saving question details:', updatedDetails);
-    // You may want to update the state or perform additional actions here
+    // Here you can update the state or UI based on the saved question
+    console.log('Question details saved:', updatedDetails);
   };
 
   return (
-    <div className="app-container">
-      <div className="left-panel">
+    <div className="app-container flex">
+      <div className="left-panel w-1/2 border-r">
         <QuestionBank onQuestionSelect={handleQuestionSelect} />
       </div>
-      <div className="right-panel">
+      <div className="right-panel w-1/2">
         {selectedQuestionDetails ? (
           <QuestionDetails
             questionDetails={selectedQuestionDetails}
+            levelId={selectedLevelId}
+            questionId={selectedQuestionId}
             onSave={handleSaveQuestionDetails}
           />
         ) : (
-          <div className="placeholder">Select a question to edit its details.</div>
+          <div className="placeholder p-4">Select a question to edit its details.</div>
         )}
       </div>
     </div>

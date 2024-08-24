@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Level = require('../models/Level');
 
 // Get all levels
@@ -27,22 +28,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update a level and its questions
-router.put('/:levelId', async (req, res) => {
-  try {
-    const level = await Level.findById(req.params.levelId);
-    if (!level) return res.status(404).json({ message: 'Level not found' });
-
-    level.level = req.body.level || level.level;
-    level.questions = req.body.questions || level.questions;
-
-    const updatedLevel = await level.save();
-    res.json(updatedLevel);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
 // Add a new Question to a Level
 router.post('/:levelId/questions', async (req, res) => {
   try {
@@ -56,11 +41,12 @@ router.post('/:levelId/questions', async (req, res) => {
 
     level.questions.push(newQuestion);
     const updatedLevel = await level.save();
-    res.status(201).json(updatedLevel);
+    res.status(201).json(newQuestion);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // Update an existing Question within a Level
 router.put('/:levelId/questions/:questionId', async (req, res) => {
@@ -78,7 +64,7 @@ router.put('/:levelId/questions/:questionId', async (req, res) => {
     }
 
     const updatedLevel = await level.save();
-    res.json(updatedLevel);
+    res.json(question);  // Return the updated question
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
