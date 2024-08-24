@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PlusCircle, MinusCircle, GripVertical } from 'lucide-react';
+import Notification from './Notification';
 
 const QuestionBank = ({ onQuestionSelect }) => {
   const [tree, setTree] = useState([]);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchLevels();
@@ -21,29 +23,24 @@ const QuestionBank = ({ onQuestionSelect }) => {
   const addQuestion = (levelIndex) => {
     console.log(`Adding question to level index: ${levelIndex}`);
 
-    // Create a new question object locally
     const newQuestion = {
-      _id: `temp-${Date.now()}`, // Temporary ID until the backend generates a real one
+      _id: `temp-${Date.now()}`,
       text: `Question ${tree[levelIndex].questions.length + 1}`,
       details: { questionText: '', options: ['', '', ''], correctOption: '' }
     };
 
-    // Update the frontend state immediately
     const updatedTree = [...tree];
     updatedTree[levelIndex].questions.push(newQuestion);
     setTree(updatedTree);
 
-    // Now make the API call to save the new question
     const levelId = tree[levelIndex]._id;
     axios.post(`http://localhost:5000/api/levels/${levelId}/questions`, newQuestion)
       .then(response => {
-        // Replace the temporary question with the one returned by the backend
         updatedTree[levelIndex].questions[updatedTree[levelIndex].questions.length - 1] = response.data;
         setTree([...updatedTree]);
       })
       .catch(error => {
         console.error('Error adding question:', error.response ? error.response.data : error.message);
-        // Optionally remove the temp question if saving fails
       });
   };
 
@@ -53,12 +50,20 @@ const QuestionBank = ({ onQuestionSelect }) => {
     const questionId = updatedTree[levelIndex].questions[questionIndex]._id;
 
     try {
-      await axios.delete(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`);
-      
-      updatedTree[levelIndex].questions.splice(questionIndex, 1);
-      setTree(updatedTree);
+      console.log("in delete question");
+      console.log("Level ID:", levelId);
+      console.log("Question ID:", questionId);
+
+      const response = await axios.delete(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`);
+
+      if (response.status === 200) {
+        updatedTree[levelIndex].questions.splice(questionIndex, 1);
+        setTree(updatedTree);
+        setNotification(response.data.message); // Show success notification
+      }
     } catch (error) {
       console.error('Error deleting question:', error.response ? error.response.data : error.message);
+      setNotification('Failed to delete question'); // Show failure notification
     }
   };
 
@@ -113,8 +118,8 @@ const QuestionBank = ({ onQuestionSelect }) => {
                     <button 
                       className="text-red-500"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        removeQuestion(levelIndex, questionIndex);
+                        e.stopPropagation(); // Prevent click from selecting the question
+                        removeQuestion(levelIndex, questionIndex); // Call the remove function
                       }}
                     >
                       <MinusCircle className="h-4 w-4" />
@@ -132,6 +137,13 @@ const QuestionBank = ({ onQuestionSelect }) => {
       <div className="mt-4 space-x-2">
         <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={addLevel}>Add New Level</button>
       </div>
+
+      {notification && (
+        <Notification 
+          message={notification} 
+          onClose={() => setNotification(null)} 
+        />
+      )}
     </div>
   );
 };
