@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import QuestionBank from './components/QuestionBank';
 import QuestionDetails from './components/QuestionDetails';
-import './App.css';
 
 function App() {
   const [selectedQuestionDetails, setSelectedQuestionDetails] = useState(null);
@@ -14,26 +13,29 @@ function App() {
     setSelectedQuestionId(questionId);
   };
 
-  const handleSaveQuestionDetails = (updatedDetails) => {
-    // Here you can update the state or UI based on the saved question
-    console.log('Question details saved:', updatedDetails);
+  const handleSave = (updatedQuestion) => {
+    // Handle saving the updated question in the state if necessary
+    const updatedQuestions = {
+      ...selectedQuestionDetails,
+      ...updatedQuestion,
+    };
+
+    setSelectedQuestionDetails(updatedQuestions);
   };
 
   return (
-    <div className="app-container flex">
-      <div className="left-panel w-1/2 border-r">
+    <div className="App flex">
+      <div className="w-1/2 p-4 border-r"> {/* Set to half width and add padding */}
         <QuestionBank onQuestionSelect={handleQuestionSelect} />
       </div>
-      <div className="right-panel w-1/2">
-        {selectedQuestionDetails ? (
-          <QuestionDetails
+      <div className="w-1/2 p-4"> {/* Set to half width and add padding */}
+        {selectedQuestionDetails && (
+          <QuestionDetails 
             questionDetails={selectedQuestionDetails}
             levelId={selectedLevelId}
             questionId={selectedQuestionId}
-            onSave={handleSaveQuestionDetails}
+            onSave={handleSave}
           />
-        ) : (
-          <div className="placeholder p-4">Select a question to edit its details.</div>
         )}
       </div>
     </div>

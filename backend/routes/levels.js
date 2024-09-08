@@ -28,20 +28,34 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Add a new Question to a Level
+// Delete a Level
+router.delete('/:levelId', async (req, res) => {
+  try {
+    const level = await Level.findById(req.params.levelId);
+    if (!level) return res.status(404).json({ message: 'Level not found' });
+
+    await level.deleteOne();
+    res.json({ message: 'Level deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.post('/:levelId/questions', async (req, res) => {
   try {
     const level = await Level.findById(req.params.levelId);
     if (!level) return res.status(404).json({ message: 'Level not found' });
 
     const newQuestion = {
+      title: req.body.title,  // Capture the question title
       text: req.body.text,
       details: req.body.details
     };
 
     level.questions.push(newQuestion);
     const updatedLevel = await level.save();
-    res.status(201).json(newQuestion);
+    
+    res.status(201).json(updatedLevel.questions[updatedLevel.questions.length - 1]);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -55,16 +69,14 @@ router.put('/:levelId/questions/:questionId', async (req, res) => {
     if (!level) return res.status(404).json({ message: 'Level not found' });
 
     const question = level.questions.id(req.params.questionId);
-    if (question) {
-      // Update existing question
-      question.text = req.body.text || question.text;
-      question.details = req.body.details || question.details;
-    } else {
-      return res.status(404).json({ message: 'Question not found' });
-    }
+    if (!question) return res.status(404).json({ message: 'Question not found' });
+
+    question.title = req.body.title || question.title;
+    question.text = req.body.text || question.text;
+    question.details = req.body.details || question.details;
 
     const updatedLevel = await level.save();
-    res.json(question);  // Return the updated question
+    res.json(question);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

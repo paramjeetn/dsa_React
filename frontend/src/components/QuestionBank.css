@@ -1,0 +1,75 @@
+.question-bank-container {
+    padding: 16px;
+  }
+  
+  .level-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Space between levels */
+  }
+  
+  .level-box {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    max-height: 400px; /* Maximum height for a level box */
+    overflow-y: auto; /* Scrollbar if content exceeds max-height */
+  }
+  
+  .level-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .level-name {
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+  
+  .questions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Space between questions */
+    width: 100%;
+  }
+  
+  .question-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    word-break: break-word; /* Prevents overflow for long titles */
+  }
+  
+  .add-question-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background-color: #e0f7fa;
+    border: 1px solid #00acc1;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  
+  .add-level-button {
+    padding: 8px 16px;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .add-level-button:hover {
+    background-color: #388e3c;
+  }
+  

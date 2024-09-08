@@ -3,6 +3,9 @@ import axios from 'axios';
 import { PlusCircle, MinusCircle, GripVertical } from 'lucide-react';
 import Notification from './Notification';
 
+// Base URL for switching between local and cloud DBOS backend
+const BASE_URL = 'https://paramjeetnpradhan-dbos_demo.cloud.dbos.dev';  // Change to 'http://localhost:5000' for local testing
+
 const QuestionBank = ({ onQuestionSelect }) => {
   const [tree, setTree] = useState([]);
   const [notification, setNotification] = useState(null);
@@ -13,7 +16,7 @@ const QuestionBank = ({ onQuestionSelect }) => {
 
   const fetchLevels = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/levels');
+      const response = await axios.get(`${BASE_URL}/levels`);  // Use BASE_URL
       setTree(response.data);
     } catch (error) {
       console.error('Error fetching levels:', error);
@@ -21,11 +24,10 @@ const QuestionBank = ({ onQuestionSelect }) => {
   };
 
   const addQuestion = (levelIndex) => {
-    console.log(`Adding question to level index: ${levelIndex}`);
-
     const newQuestion = {
       _id: `temp-${Date.now()}`,
-      text: `Question ${tree[levelIndex].questions.length + 1}`,
+      title: `Question ${tree[levelIndex].questions.length + 1}`,
+      text: '',
       details: { questionText: '', options: ['', '', ''], correctOption: '' }
     };
 
@@ -34,7 +36,7 @@ const QuestionBank = ({ onQuestionSelect }) => {
     setTree(updatedTree);
 
     const levelId = tree[levelIndex]._id;
-    axios.post(`http://localhost:5000/api/levels/${levelId}/questions`, newQuestion)
+    axios.post(`${BASE_URL}/levels/${levelId}/questions`, newQuestion)  // Use BASE_URL
       .then(response => {
         updatedTree[levelIndex].questions[updatedTree[levelIndex].questions.length - 1] = response.data;
         setTree([...updatedTree]);
@@ -50,20 +52,16 @@ const QuestionBank = ({ onQuestionSelect }) => {
     const questionId = updatedTree[levelIndex].questions[questionIndex]._id;
 
     try {
-      console.log("in delete question");
-      console.log("Level ID:", levelId);
-      console.log("Question ID:", questionId);
-
-      const response = await axios.delete(`http://localhost:5000/api/levels/${levelId}/questions/${questionId}`);
+      const response = await axios.delete(`${BASE_URL}/levels/${levelId}/questions/${questionId}`);  // Use BASE_URL
 
       if (response.status === 200) {
         updatedTree[levelIndex].questions.splice(questionIndex, 1);
         setTree(updatedTree);
-        setNotification(response.data.message); // Show success notification
+        setNotification(response.data.message);  // Show success notification
       }
     } catch (error) {
       console.error('Error deleting question:', error.response ? error.response.data : error.message);
-      setNotification('Failed to delete question'); // Show failure notification
+      setNotification('Failed to delete question');  // Show failure notification
     }
   };
 
@@ -73,11 +71,20 @@ const QuestionBank = ({ onQuestionSelect }) => {
       questions: []
     };
     try {
-      const response = await axios.post('http://localhost:5000/api/levels', newLevel);
+      const response = await axios.post(`${BASE_URL}/levels`, { levelData: newLevel });  // Use BASE_URL
       setTree([...tree, response.data]);
     } catch (error) {
       console.error('Error adding level:', error.response ? error.response.data : error.message);
     }
+  };
+
+  const handleQuestionSelect = (question, levelId, questionId) => {
+    onQuestionSelect({
+      title: question.title,
+      questionText: question.details.questionText,
+      options: question.details.options,
+      correctOption: question.details.correctOption,
+    }, levelId, questionId);
   };
 
   return (
@@ -111,15 +118,15 @@ const QuestionBank = ({ onQuestionSelect }) => {
                 <div 
                   key={question._id} 
                   className="inline-block cursor-pointer hover:bg-gray-100 p-2 border border-gray-300 rounded"
-                  onClick={() => onQuestionSelect(question.details, level._id, question._id)}
+                  onClick={() => handleQuestionSelect(question, level._id, question._id)}
                 >
                   <div className="p-2 flex items-center space-x-2">
-                    <span>{question.text}</span>
+                    <span>{question.title}</span>
                     <button 
                       className="text-red-500"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent click from selecting the question
-                        removeQuestion(levelIndex, questionIndex); // Call the remove function
+                        e.stopPropagation();
+                        removeQuestion(levelIndex, questionIndex);
                       }}
                     >
                       <MinusCircle className="h-4 w-4" />

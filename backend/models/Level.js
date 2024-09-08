@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const questionSchema = new mongoose.Schema({
+  title: { type: String, required: true },  // New field for question title
   text: { type: String, required: true },
   details: {
     questionText: { type: String, required: true },
