@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Base URL for switching between local and cloud DBOS backend
-const BASE_URL = 'https://paramjeetnpradhan-dbos_demo.cloud.dbos.dev';  // Change to 'http://localhost:5000' for local testing
-
 const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
+
+  const BASE_URL = 'http://localhost:3001';  // Change to 'http://localhost:5000' for local testing
+
   const [details, setDetails] = useState({
-    questionTitle: questionDetails?.title || '',
     questionText: questionDetails?.questionText || '',
     options: questionDetails?.options || ['', '', ''],
     correctOption: questionDetails?.correctOption || ''
@@ -17,7 +16,6 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
 
   useEffect(() => {
     setDetails({
-      questionTitle: questionDetails?.title || '',
       questionText: questionDetails?.questionText || '',
       options: questionDetails?.options || ['', '', ''],
       correctOption: questionDetails?.correctOption || ''
@@ -32,16 +30,13 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
   };
 
   const handleCorrectOptionChange = (index) => {
-    setDetails({
-      ...details,
-      correctOption: details.options[index],
+    setDetails({ 
+      ...details, 
+      correctOption: details.options[index]
     });
   };
 
   const validateDetails = () => {
-    if (!details.questionTitle.trim()) {
-      return "Question title cannot be empty.";
-    }
     if (!details.questionText.trim()) {
       return "Question text cannot be empty.";
     }
@@ -66,23 +61,26 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
 
       if (currentQuestionId && !currentQuestionId.startsWith('temp-')) {
         // Update existing question
-        await axios.put(`${BASE_URL}/levels/${levelId}/questions/${currentQuestionId}`, {
-          title: details.questionTitle,
+        console.log('in update existing question');
+        console.log(levelId);
+        console.log(currentQuestionId);
+        await axios.put(`${BASE_URL}/api/levels/${levelId}/questions/${currentQuestionId}`, {
           text: details.questionText,
-          details: details,
+          details: details
         });
       } else {
         // Create new question
-        const response = await axios.post(`${BASE_URL}/levels/${levelId}/questions`, {
-          title: details.questionTitle,
+        console.log('in create new question');
+        console.log(levelId);
+        const response = await axios.post(`${BASE_URL}/api/levels/${levelId}/questions`, {
           text: details.questionText,
-          details: details,
+          details: details
         });
         savedQuestion = response.data;
-        setCurrentQuestionId(savedQuestion._id);
+        setCurrentQuestionId(savedQuestion._id);  // Update with the real ID from the backend
         onSave(savedQuestion);
       }
-
+      
       setNotification('Question saved successfully!');
       setTimeout(() => setNotification(''), 3000);
 
@@ -97,15 +95,6 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
     <div className="p-4 bg-white shadow-md rounded">
       <h3 className="text-xl font-bold mb-4">Edit Question Details</h3>
       <div className="mb-4">
-        <label className="block mb-2">Question Title:</label>
-        <input 
-          type="text" 
-          className="w-full border p-2"
-          value={details.questionTitle}
-          onChange={(e) => setDetails({ ...details, questionTitle: e.target.value })}
-        />
-      </div>
-      <div className="mb-4">
         <label className="block mb-2">Question Text:</label>
         <input 
           type="text" 
@@ -115,51 +104,23 @@ const QuestionDetails = ({ questionDetails, levelId, questionId, onSave }) => {
         />
       </div>
       <div className="mb-4">
-        <label className="block mb-2">Option 1:</label>
-        <div className="flex items-center mb-2">
-          <input 
-            type="text" 
-            className="w-full border p-2 mr-2"
-            value={details.options[0]}
-            onChange={(e) => handleOptionChange(0, e.target.value)}
-          />
-          <button
-            className={`p-2 rounded ${details.correctOption === details.options[0] ? 'bg-green-500 text-white' : 'bg-gray-300'}`}
-            onClick={() => handleCorrectOptionChange(0)}
-          >
-            {details.correctOption === details.options[0] ? 'Correct' : 'Set as Correct'}
-          </button>
-        </div>
-        <label className="block mb-2">Option 2:</label>
-        <div className="flex items-center mb-2">
-          <input 
-            type="text" 
-            className="w-full border p-2 mr-2"
-            value={details.options[1]}
-            onChange={(e) => handleOptionChange(1, e.target.value)}
-          />
-          <button
-            className={`p-2 rounded ${details.correctOption === details.options[1] ? 'bg-green-500 text-white' : 'bg-gray-300'}`}
-            onClick={() => handleCorrectOptionChange(1)}
-          >
-            {details.correctOption === details.options[1] ? 'Correct' : 'Set as Correct'}
-          </button>
-        </div>
-        <label className="block mb-2">Option 3:</label>
-        <div className="flex items-center mb-2">
-          <input 
-            type="text" 
-            className="w-full border p-2 mr-2"
-            value={details.options[2]}
-            onChange={(e) => handleOptionChange(2, e.target.value)}
-          />
-          <button
-            className={`p-2 rounded ${details.correctOption === details.options[2] ? 'bg-green-500 text-white' : 'bg-gray-300'}`}
-            onClick={() => handleCorrectOptionChange(2)}
-          >
-            {details.correctOption === details.options[2] ? 'Correct' : 'Set as Correct'}
-          </button>
-        </div>
+        <label className="block mb-2">Options:</label>
+        {details.options.map((option, index) => (
+          <div key={index} className="mb-2 flex items-center">
+            <input 
+              type="text" 
+              className="w-full border p-2 mr-2"
+              value={option}
+              onChange={(e) => handleOptionChange(index, e.target.value)}
+            />
+            <button
+              className={`p-2 rounded ${details.correctOption === option ? 'bg-green-500 text-white' : 'bg-gray-300'}`}
+              onClick={() => handleCorrectOptionChange(index)}
+            >
+              {details.correctOption === option ? 'Correct' : 'Set as Correct'}
+            </button>
+          </div>
+        ))}
       </div>
       <button 
         className="bg-blue-500 text-white px-4 py-2 rounded"
